@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Scanner Auto Stop + Scan Ulang</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    #reader {
+      width: 300px;
+      margin: 20px auto;
+    }
+    #result {
+      text-align: center;
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    #rescanBtn {
+      display: none;
+      margin: 10px auto;
+      padding: 10px 20px;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+
+  <h2 style="text-align:center;">Scan QR Code</h2>
+  <div id="reader"></div>
+  <div id="result">Menunggu scan...</div>
+  <button id="rescanBtn" onclick="startScan()">Scan Ulang</button>
+
+  <script>
+    const html5QrCode = new Html5Qrcode("reader");
+    let currentCameraId = null;
+
+    // Fungsi untuk memulai scan
+    function startScan() {
+      document.getElementById('result').innerText = "Menunggu scan...";
+      document.getElementById('rescanBtn').style.display = "none";
+
+      if (currentCameraId) {
+        html5QrCode.start(
+          currentCameraId,
+          { fps: 10, qrbox: 250 },
+          onScanSuccess,
+          onScanFailure
+        );
+      } else {
+        Html5Qrcode.getCameras().then(devices => {
+          if (devices && devices.length) {
+            currentCameraId = devices[0].id;
+            html5QrCode.start(
+              currentCameraId,
+              { fps: 10, qrbox: 250 },
+              onScanSuccess,
+              onScanFailure
+            );
+          } else {
+            alert("Kamera tidak ditemukan.");
+          }
+        }).catch(err => {
+          console.error("Gagal mengakses kamera", err);
+          alert("Gagal mengakses kamera.");
+        });
+      }
+    }
+
+    // Ketika berhasil scan
+    function onScanSuccess(decodedText, decodedResult) {
+      document.getElementById('result').innerText = `QR Terbaca: ${decodedText}`;
+      html5QrCode.stop().then(() => {
+        console.log("Scan dihentikan.");
+        document.getElementById('rescanBtn').style.display = "block";
+      }).catch(err => {
+        console.error("Gagal stop scan", err);
+      });
+    }
+
+    function onScanFailure(error) {
+      // Bisa diabaikan
+    }
+
+    // Jalankan saat halaman pertama kali dibuka
+    window.onload = startScan;
+  </script>
+
+</body>
+</html>
