@@ -104,7 +104,14 @@
     } else {
       Html5Qrcode.getCameras().then(devices => {
         if (devices && devices.length) {
-          currentCameraId = devices[0].id;
+          // Cari kamera belakang berdasarkan nama
+          const backCam = devices.find(cam => 
+            cam.label.toLowerCase().includes('back') || 
+            cam.label.toLowerCase().includes('belakang')
+          );
+      
+          currentCameraId = backCam ? backCam.id : devices[0].id;
+      
           html5QrCode.start(
             currentCameraId,
             { fps: 10, qrbox: { width: 250, height: 250 } },
