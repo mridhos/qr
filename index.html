@@ -1,89 +1,158 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>QR Scanner Auto Stop + Scan Ulang</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Scan Mobile</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: sans-serif;
+      background-color: #f9f9f9;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
     #reader {
-      width: 300px;
-      margin: 20px auto;
+      flex: 0 0 80vh;
+      width: 100%;
+      background-color: black;
     }
-    #result {
+
+    #info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      padding: 10px;
+      gap: 10px;
+    }
+
+    #result, #status {
+      width: 90%;
+      max-width: 400px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 1.1em;
       text-align: center;
-      font-size: 1.2em;
-      font-weight: bold;
-      margin-top: 10px;
     }
-    #rescanBtn {
+
+    #result {
+      background: #e0ffe0;
+      color: #006600;
       display: none;
-      margin: 10px auto;
-      padding: 10px 20px;
-      font-size: 1em;
+    }
+
+    #status {
+      background: #fff3cd;
+      color: #856404;
+      display: none;
+    }
+
+    #rescanBtn {
+      padding: 14px 20px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 10px;
+      background: #007bff;
+      color: white;
+      display: none;
+      width: 90%;
+      max-width: 400px;
     }
   </style>
 </head>
 <body>
 
-  <h2 style="text-align:center;">Scan QR Code</h2>
+<div id="app">
   <div id="reader"></div>
-  <div id="result">Menunggu scan...</div>
-  <button id="rescanBtn" onclick="startScan()">Scan Ulang</button>
 
-  <script>
-    const html5QrCode = new Html5Qrcode("reader");
-    let currentCameraId = null;
+  <div id="info">
+    <div id="result">Menunggu scan...</div>
+    <div id="status">Status</div>
+    <button id="rescanBtn" onclick="startScan()">Scan Ulang</button>
+  </div>
+</div>
 
-    // Fungsi untuk memulai scan
-    function startScan() {
-      document.getElementById('result').innerText = "Menunggu scan...";
-      document.getElementById('rescanBtn').style.display = "none";
+<script>
+  const html5QrCode = new Html5Qrcode("reader");
+  let currentCameraId = null;
 
-      if (currentCameraId) {
-        html5QrCode.start(
-          currentCameraId,
-          { fps: 10, qrbox: 250 },
-          onScanSuccess,
-          onScanFailure
-        );
-      } else {
-        Html5Qrcode.getCameras().then(devices => {
-          if (devices && devices.length) {
-            currentCameraId = devices[0].id;
-            html5QrCode.start(
-              currentCameraId,
-              { fps: 10, qrbox: 250 },
-              onScanSuccess,
-              onScanFailure
-            );
-          } else {
-            alert("Kamera tidak ditemukan.");
-          }
-        }).catch(err => {
-          console.error("Gagal mengakses kamera", err);
-          alert("Gagal mengakses kamera.");
-        });
-      }
-    }
+  function startScan() {
+    document.getElementById('result').style.display = "none";
+    document.getElementById('status').style.display = "none";
+    document.getElementById('rescanBtn').style.display = "none";
 
-    // Ketika berhasil scan
-    function onScanSuccess(decodedText, decodedResult) {
-      document.getElementById('result').innerText = `QR Terbaca: ${decodedText}`;
-      html5QrCode.stop().then(() => {
-        console.log("Scan dihentikan.");
-        document.getElementById('rescanBtn').style.display = "block";
+    if (currentCameraId) {
+      html5QrCode.start(
+        currentCameraId,
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        onScanSuccess,
+        () => {}
+      );
+    } else {
+      Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length) {
+          currentCameraId = devices[0].id;
+          html5QrCode.start(
+            currentCameraId,
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            onScanSuccess,
+            () => {}
+          );
+        } else {
+          alert("Kamera tidak ditemukan.");
+        }
       }).catch(err => {
-        console.error("Gagal stop scan", err);
+        alert("Gagal mengakses kamera: " + err.message);
       });
     }
+  }
 
-    function onScanFailure(error) {
-      // Bisa diabaikan
-    }
+  function onScanSuccess(decodedText, decodedResult) {
+    html5QrCode.stop().then(() => {
+      document.getElementById('result').innerText = `QR Terbaca: ${decodedText}`;
+      document.getElementById('result').style.display = "block";
+      document.getElementById('rescanBtn').style.display = "block";
+      sendToServer(decodedText);
+    });
+  }
 
-    // Jalankan saat halaman pertama kali dibuka
-    window.onload = startScan;
-  </script>
+  function sendToServer(data) {
+    document.getElementById('status').style.display = "block";
+    document.getElementById('status').innerText = "Mengirim data ke server...";
+
+    fetch('https://your-server.com/api/scan', { // GANTI URL INI
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ qr_data: data, waktu: new Date().toISOString() })
+    })
+    .then(response => {
+      if (response.ok) {
+        document.getElementById('status').innerText = "✅ Data berhasil dikirim.";
+      } else {
+        throw new Error('Server error.');
+      }
+    })
+    .catch(err => {
+      document.getElementById('status').innerText = "❌ Gagal mengirim ke server.";
+      console.error(err);
+    });
+  }
+
+  window.onload = startScan;
+</script>
 
 </body>
 </html>
