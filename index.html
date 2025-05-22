@@ -6,9 +6,7 @@
   <title>QR Scan Mobile</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     html, body {
       margin: 0;
       padding: 0;
@@ -60,16 +58,19 @@
       display: none;
     }
 
-    #rescanBtn {
+    button {
       padding: 14px 20px;
-      font-size: 1.2em;
+      font-size: 1.1em;
       border: none;
       border-radius: 10px;
       background: #007bff;
       color: white;
-      display: none;
       width: 90%;
       max-width: 400px;
+    }
+
+    #rescanBtn, #switchCamBtn {
+      display: none;
     }
   </style>
 </head>
@@ -81,50 +82,55 @@
   <div id="info">
     <div id="result">Menunggu scan...</div>
     <div id="status">Status</div>
+    <button id="switchCamBtn" onclick="switchCamera()">Ganti Kamera</button>
     <button id="rescanBtn" onclick="startScan()">Scan Ulang</button>
   </div>
 </div>
 
 <script>
   const html5QrCode = new Html5Qrcode("reader");
-  let currentCameraId = null;
+  let cameras = [];
+  let currentCameraIndex = 0;
 
   function startScan() {
     document.getElementById('result').style.display = "none";
     document.getElementById('status').style.display = "none";
     document.getElementById('rescanBtn').style.display = "none";
+    document.getElementById('switchCamBtn').style.display = "none";
 
-    if (currentCameraId) {
-      html5QrCode.start(
-        currentCameraId,
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        onScanSuccess,
-        () => {}
-      );
-    } else {
+    if (cameras.length === 0) {
       Html5Qrcode.getCameras().then(devices => {
-        if (devices && devices.length) {
-          // Cari kamera belakang berdasarkan nama
-          const backCam = devices.find(cam => 
-            cam.label.toLowerCase().includes('back') || 
-            cam.label.toLowerCase().includes('belakang')
-          );
-      
-          currentCameraId = backCam ? backCam.id : devices[0].id;
-      
-          html5QrCode.start(
-            currentCameraId,
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            onScanSuccess,
-            () => {}
-          );
-        } else {
-          alert("Kamera tidak ditemukan.");
-        }
+        if (devices.length === 0) throw new Error("Tidak ada kamera ditemukan.");
+
+        cameras = devices;
+        currentCameraIndex = 0;
+        startCameraByIndex(currentCameraIndex);
       }).catch(err => {
         alert("Gagal mengakses kamera: " + err.message);
       });
+    } else {
+      startCameraByIndex(currentCameraIndex);
     }
+  }
+
+  function startCameraByIndex(index) {
+    html5QrCode.start(
+      cameras[index].id,
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      onScanSuccess,
+      () => {}
+    ).then(() => {
+      document.getElementById('switchCamBtn').style.display = "block";
+    }).catch(err => {
+      alert("Gagal memulai kamera: " + err.message);
+    });
+  }
+
+  function switchCamera() {
+    html5QrCode.stop().then(() => {
+      currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
+      startCameraByIndex(currentCameraIndex);
+    });
   }
 
   function onScanSuccess(decodedText, decodedResult) {
@@ -132,6 +138,7 @@
       document.getElementById('result').innerText = `QR Terbaca: ${decodedText}`;
       document.getElementById('result').style.display = "block";
       document.getElementById('rescanBtn').style.display = "block";
+      document.getElementById('switchCamBtn').style.display = "none";
       sendToServer(decodedText);
     });
   }
@@ -140,7 +147,7 @@
     document.getElementById('status').style.display = "block";
     document.getElementById('status').innerText = "Mengirim data ke server...";
 
-    fetch('https://your-server.com/api/scan', { // GANTI URL INI
+    fetch('https://your-server.com/api/scan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ qr_data: data, waktu: new Date().toISOString() })
@@ -149,7 +156,7 @@
       if (response.ok) {
         document.getElementById('status').innerText = "✅ Data berhasil dikirim.";
       } else {
-        throw new Error('Server error.');
+        throw new Error("Server mengembalikan error.");
       }
     })
     .catch(err => {
