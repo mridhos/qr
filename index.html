@@ -10,21 +10,21 @@
     html, body {
       margin: 0;
       padding: 0;
-      height: 100%;
+      height: 90%;
       font-family: sans-serif;
-      background-color: #141414;
+      background-color: #302f2f;
     }
 
     #app {
       display: flex;
       flex-direction: column;
-      height: 100%;
+      height: 100vh;
     }
 
     #reader {
+      flex: 0 0 80vh;
       width: 100%;
-      background-color: black;
-      /* height akan ditentukan oleh JS */
+      background-color: rgb(58, 57, 57);
     }
 
     #info {
@@ -63,7 +63,7 @@
       font-size: 1.1em;
       border: none;
       border-radius: 10px;
-      background: #052547;
+      background: #022d5c;
       color: white;
       width: 90%;
       max-width: 400px;
@@ -92,12 +92,6 @@
   let cameras = [];
   let currentCameraIndex = 0;
 
-  function resizeReader() {
-    const screenHeight = window.innerHeight;
-    const reader = document.getElementById("reader");
-    reader.style.height = (screenHeight * 0.8) + "px"; // 80% dari tinggi layar
-  }
-
   function startScan() {
     document.getElementById('result').style.display = "none";
     document.getElementById('status').style.display = "none";
@@ -107,6 +101,7 @@
     if (cameras.length === 0) {
       Html5Qrcode.getCameras().then(devices => {
         if (devices.length === 0) throw new Error("Tidak ada kamera ditemukan.");
+
         cameras = devices;
         currentCameraIndex = 0;
         startCameraByIndex(currentCameraIndex);
@@ -121,13 +116,7 @@
   function startCameraByIndex(index) {
     html5QrCode.start(
       cameras[index].id,
-      {
-        fps: 10,
-        qrbox: {
-          width: Math.min(window.innerWidth, window.innerHeight) * 0.5,
-          height: Math.min(window.innerWidth, window.innerHeight) * 0.5
-        }
-      },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
       onScanSuccess,
       () => {}
     ).then(() => {
@@ -155,25 +144,19 @@
   }
 
   async function sendToServer(xQR) {
-    const statusEl = document.getElementById('status');
-    statusEl.style.display = "block";
-    statusEl.innerText = "Mengirim data ke server...";
-    try {
-      const response = await fetch(http://txw.us.to:81/ga/scanqr/hasil/?QR=' + encodeURIComponent(xQR));
-      const data = await response.text();
-      statusEl.innerText = data;
-    } catch (error) {
-      statusEl.innerText = "Gagal mengirim data: " + error.message;
-    }
+      const statusEl = document.getElementById('status');
+      statusEl.style.display = "block";
+      statusEl.innerText = "Mengirim data ke server...";
+      try {
+          const response = await fetch('http://txw.us.to:81/GA/main/scanqr/hasil/?QR='+xQR);
+          const data = await response.text();
+          statusEl.innerText = data;  //
+      } catch (error) {
+          statusEl.innerText = "Gagal mengirim data: " + error.message;
+      }
   }
 
-  // Jalankan saat halaman selesai dimuat
-  window.onload = () => {
-    resizeReader();
-    startScan();
-  };
-
-  window.onresize = resizeReader;
+  window.onload = startScan;
 </script>
 
 </body>
