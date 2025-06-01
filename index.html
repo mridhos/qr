@@ -134,7 +134,7 @@
 
   function onScanSuccess(decodedText, decodedResult) {
     html5QrCode.stop().then(() => {
-      document.getElementById('result').innerText = `QR Terbaca: ${decodedText}`;
+      document.getElementById('result').innerText = `${decodedText}`;
       document.getElementById('result').style.display = "block";
       document.getElementById('rescanBtn').style.display = "block";
       document.getElementById('switchCamBtn').style.display = "none";
@@ -146,7 +146,7 @@
       const statusEl = document.getElementById('status');
       statusEl.style.display = "block";
       statusEl.innerText = "Mengirim data ke server...";
-      response.sendRedirect("http://txw.us.to:81/GA/main/scanqr/?QR="+xQR);
+      window.location.href = "http://txw.us.to:81/GA/main/scanqr/?QR=" + encodeURIComponent(xQR);
   }
 
   window.onload = startScan;
