@@ -91,26 +91,35 @@
   let cameras = [];
   let currentCameraIndex = 0;
 
-  function startScan() {
-    document.getElementById('result').style.display = "none";
-    document.getElementById('status').style.display = "none";
-    document.getElementById('rescanBtn').style.display = "none";
-    document.getElementById('switchCamBtn').style.display = "none";
+function startScan() {
+  document.getElementById('result').style.display = "none";
+  document.getElementById('status').style.display = "none";
+  document.getElementById('rescanBtn').style.display = "none";
+  document.getElementById('switchCamBtn').style.display = "none";
 
-    if (cameras.length === 0) {
-      Html5Qrcode.getCameras().then(devices => {
-        if (devices.length === 0) throw new Error("Tidak ada kamera ditemukan.");
+  if (cameras.length === 0) {
+    Html5Qrcode.getCameras().then(devices => {
+      if (devices.length === 0) throw new Error("Tidak ada kamera ditemukan.");
 
-        cameras = devices;
-        currentCameraIndex = 0;
-        startCameraByIndex(currentCameraIndex);
-      }).catch(err => {
-        alert("Gagal mengakses kamera: " + err.message);
-      });
-    } else {
+      cameras = devices;
+
+      // Cari kamera belakang
+      const backCamIndex = devices.findIndex(cam =>
+        cam.label.toLowerCase().includes('back') ||
+        cam.label.toLowerCase().includes('rear')
+      );
+
+      currentCameraIndex = backCamIndex !== -1 ? backCamIndex : 0;
+
       startCameraByIndex(currentCameraIndex);
-    }
+    }).catch(err => {
+      alert("Gagal mengakses kamera: " + err.message);
+    });
+  } else {
+    startCameraByIndex(currentCameraIndex);
   }
+}
+
 
   function startCameraByIndex(index) {
     html5QrCode.start(
