@@ -146,13 +146,7 @@
       const statusEl = document.getElementById('status');
       statusEl.style.display = "block";
       statusEl.innerText = "Mengirim data ke server...";
-      try {
-          const response = await fetch('http://txw.us.to:81/GA/main/scanqr/hasil/?QR='+xQR);
-          const data = await response.text();
-          statusEl.innerText = data;  //
-      } catch (error) {
-          statusEl.innerText = "Gagal mengirim data: " + error.message;
-      }
+      response.sendRedirect("http://txw.us.to:81/GA/main/scanqr/?QR="+xQR);
   }
 
   window.onload = startScan;
