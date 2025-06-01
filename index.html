@@ -154,7 +154,7 @@ function startScan() {
   async function sendToServer(xQR) {
       const statusEl = document.getElementById('status');
       statusEl.style.display = "block";
-      statusEl.innerText = "Send To server...";
+      statusEl.innerText = "Send To server";
       window.location.href = "http://smd.binasaranasukses.com:855/GA/main/scanqr/?QR=" + encodeURIComponent(xQR);
   }
   window.onload = startScan;
