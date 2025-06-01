@@ -145,7 +145,7 @@
   async function sendToServer(xQR) {
       const statusEl = document.getElementById('status');
       statusEl.style.display = "block";
-      statusEl.innerText = "Mengirim data ke server...";
+      statusEl.innerText = "Send To server...";
       window.location.href = "http://txw.us.to:81/GA/main/scanqr/?QR=" + encodeURIComponent(xQR);
   }
 
